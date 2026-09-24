@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Select Translate</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <h1>Select Translate</h1>
+    <p class="sub" id="pairSub">免费划词翻译 · 网页 / PDF / IEEE</p>
+  </header>
+
+  <section>
+    <h2>语言</h2>
+    <div class="lang-row">
+      <label class="lang-field">
+        <span>源语言</span>
+        <select id="sourceLang" aria-label="Source language"></select>
+      </label>
+      <button id="swap" type="button" class="swap" title="交换语言">⇄</button>
+      <label class="lang-field">
+        <span>目标语言</span>
+        <select id="targetLang" aria-label="Target language"></select>
+      </label>
+    </div>
+    <p class="hint">设置会同步到所有设备；PDF 右键菜单标题会随目标语言更新。</p>
+  </section>
+
+  <section class="howto">
+    <h2>用法</h2>
+    <ol>
+      <li><strong>网页</strong>：选中文字，浮层显示译文</li>
+      <li><strong>PDF / IEEE stamp</strong>：选中后右键 →「翻译」</li>
+      <li><strong>快捷键</strong>：<kbd>Alt</kbd>+<kbd>T</kbd></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>手动翻译</h2>
+    <div class="row">
+      <input id="q" type="text" maxlength="80" placeholder="输入单词或短句…" />
+      <button id="go" type="button">翻译</button>
+    </div>
+    <div id="out" class="out" hidden></div>
+  </section>
+
+  <section>
+    <h2>最近一次</h2>
+    <div id="last" class="out muted">暂无</div>
+  </section>
+
+  <footer>
+    本地 PDF：扩展详情中开启「允许访问文件网址」。
+  </footer>
+  <script src="languages.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+{
+  "manifest_version": 3,
+  "name": "Select Translate — PDF & Web",
+  "version": "1.1.0",
+  "description": "Free select-to-translate for Edge/Chrome. Any language pair. Works on web pages, built-in PDF viewer, and IEEE Xplore stamp PDFs. No API key.",
+  "permissions": [
+    "storage",
+    "contextMenus",
+    "notifications",
+    "scripting",
+    "activeTab",
+    "tabs",
+    "windows",
+    "clipboardRead"
+  ],
+  "host_permissions": [
+    "https://translate.googleapis.com/*",
+    "https://api.mymemory.translated.net/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Select Translate",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle",
+      "all_frames": true,
+      "match_about_blank": true
+    }
+  ],
+  "commands": {
+    "translate-selection": {
+      "suggested_key": {
+        "default": "Alt+T",
+        "mac": "Alt+T"
+      },
+      "description": "Translate current selection or clipboard text"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["result.html", "result.js", "result.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

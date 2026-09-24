@@ -1,0 +1,65 @@
+.enzh-bubble,
+.enzh-toast {
+  position: fixed;
+  z-index: 2147483646;
+  max-width: 280px;
+  min-width: 120px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #1a1a1a;
+  background: #fffef9;
+  border: 1px solid #d8d0c0;
+  border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  pointer-events: auto;
+}
+
+.enzh-toast {
+  top: 24px;
+  right: 24px;
+  left: auto;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+}
+
+.enzh-toast-show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.enzh-bubble-q,
+.enzh-toast-q {
+  font-size: 12px;
+  color: #6b655c;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.enzh-bubble-a,
+.enzh-toast-a {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f3a5f;
+  word-break: break-word;
+}
+
+.enzh-bubble-meta,
+.enzh-toast-meta {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #9a9286;
+}
+
+.enzh-bubble-loading {
+  color: #6b655c;
+}
+
+.enzh-bubble-err,
+.enzh-toast-err {
+  color: #9b2c2c;
+}

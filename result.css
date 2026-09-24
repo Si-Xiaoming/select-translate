@@ -1,0 +1,40 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background:
+    radial-gradient(100% 80% at 100% 0%, #e8eef6 0%, transparent 50%),
+    #f7f4ee;
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #1c1915;
+}
+
+.box {
+  padding: 18px 20px;
+}
+
+.q {
+  font-size: 13px;
+  color: #6b655c;
+  word-break: break-word;
+}
+
+.t {
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: 650;
+  color: #1f3a5f;
+  word-break: break-word;
+}
+
+.t.err {
+  font-size: 15px;
+  color: #9b2c2c;
+  font-weight: 500;
+}
+
+.meta {
+  margin-top: 14px;
+  font-size: 12px;
+  color: #9a9286;
+}
