@@ -4,13 +4,24 @@ const MENU_ID = "translate-selection";
 const RESULT_WIDTH = 380;
 const RESULT_HEIGHT = 240;
 
+/** 与 content.js 里写的键名保持一致 */
+const SHORTCUT_PING_KEY = "shortcutHandledAt";
+/** 页面内的快捷键处理过之后，多宽的窗口内认为“这次按键已经处理过” */
+const SHORTCUT_DEDUPE_WINDOW = 2500;
+/** 等页面里 content script 先响应按键（它写的是 storage.local，落地有几十毫秒延迟） */
+const SHORTCUT_DEDUPE_DELAY = 220;
+
 chrome.runtime.onInstalled.addListener(async () => {
   await ensureDefaults();
   await refreshContextMenu();
+  // 扩展被安装/更新/重载后，已经打开的页面里跑的还是旧内容脚本：
+  // 重新注入一份，旧实例会自行卸载，页面不用刷新也能继续划词。
+  await refreshOpenTabs();
 });
 
 chrome.runtime.onStartup.addListener(async () => {
   await refreshContextMenu();
+  await refreshOpenTabs();
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -46,53 +57,155 @@ async function refreshContextMenu() {
   });
 }
 
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId !== MENU_ID || !info.selectionText) return;
-  await handleTranslate(info.selectionText, tab);
-});
+/* --------------------------------------------------------- 内容脚本维护 */
 
-chrome.commands.onCommand.addListener(async (command) => {
-  if (command !== "translate-selection") return;
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab || tab.id == null) return;
+function isInjectableUrl(url) {
+  if (!url) return false;
+  return !/^(chrome|edge|devtools|chrome-extension|edge-extension|about|view-source|chrome-error|edge-error):/i.test(
+    url
+  );
+}
 
-  let text = "";
+async function injectCompanionScripts(tabId) {
   try {
-    const results = await chrome.scripting.executeScript({
-      target: { tabId: tab.id, allFrames: true },
-      func: () => {
-        const s = window.getSelection && window.getSelection();
-        return s ? String(s.toString() || "").trim() : "";
-      }
+    await chrome.scripting.insertCSS({
+      target: { tabId, allFrames: true },
+      files: ["content.css"]
     });
-    text = (results || []).map((r) => r && r.result).find((t) => t) || "";
-  } catch (_) {}
-
-  if (!text && isInjectableUrl(tab.url)) {
+  } catch (_) {
     try {
-      const clipResults = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: async () => {
-          try {
-            return (await navigator.clipboard.readText()) || "";
-          } catch {
-            return "";
-          }
-        }
-      });
-      text = (clipResults && clipResults[0] && clipResults[0].result) || "";
+      await chrome.scripting.insertCSS({ target: { tabId }, files: ["content.css"] });
     } catch (_) {}
   }
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId, allFrames: true },
+      files: ["shortcut.js", "content.js"]
+    });
+    return true;
+  } catch (_) {}
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["shortcut.js", "content.js"]
+    });
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
 
-  if (!text) {
-    await showNotification(
-      "Select Translate",
-      "PDF: select → right-click → Translate; or copy then Alt+T"
-    );
+async function refreshOpenTabs() {
+  let tabs = [];
+  try {
+    tabs = await chrome.tabs.query({});
+  } catch (_) {
     return;
   }
-  await handleTranslate(text, tab);
+  const targets = (tabs || []).filter(
+    (tab) => tab && tab.id != null && !tab.discarded && isInjectableUrl(tab.url)
+  );
+  // 分小批并发，避免一次性把浏览器压住
+  const batchSize = 6;
+  for (let i = 0; i < targets.length; i += batchSize) {
+    await Promise.all(targets.slice(i, i + batchSize).map((tab) => injectCompanionScripts(tab.id)));
+  }
+}
+
+/* ---------------------------------------------------------------- 快捷键 */
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function pageHandledShortcutRecently() {
+  try {
+    const data = await chrome.storage.local.get(SHORTCUT_PING_KEY);
+    const at = Number(data[SHORTCUT_PING_KEY] || 0);
+    return Date.now() - at < SHORTCUT_DEDUPE_WINDOW;
+  } catch (_) {
+    return false;
+  }
+}
+
+async function activeTabFromQuery() {
+  try {
+    const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    if (tabs && tabs[0]) return tabs[0];
+  } catch (_) {}
+  try {
+    const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+    return (tabs && tabs[0]) || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function selectionFromPage(tabId) {
+  try {
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tabId, allFrames: true },
+      func: () => {
+        const selection = window.getSelection && window.getSelection();
+        return selection ? String(selection.toString() || "").trim() : "";
+      }
+    });
+    return (results || []).map((item) => item && item.result).find((text) => text) || "";
+  } catch (_) {
+    return "";
+  }
+}
+
+async function clipboardFromPage(tabId) {
+  if (!tabId) return "";
+  try {
+    const results = await chrome.scripting.executeScript({
+      target: { tabId: tabId },
+      func: async () => {
+        try {
+          return (await navigator.clipboard.readText()) || "";
+        } catch (_) {
+          return "";
+        }
+      }
+    });
+    return (results && results[0] && results[0].result) || "";
+  } catch (_) {
+    return "";
+  }
+}
+
+chrome.commands.onCommand.addListener(async (command, commandTab) => {
+  if (command !== "translate-selection") return;
+  try {
+    // 页面内快捷键（content.js）通常已经处理过这次按键，避免重复翻译
+    await sleep(SHORTCUT_DEDUPE_DELAY);
+    if (await pageHandledShortcutRecently()) return;
+
+    const tab =
+      commandTab && commandTab.id != null ? commandTab : await activeTabFromQuery();
+    if (!tab || tab.id == null) return;
+    if (await pageHandledShortcutRecently()) return;
+
+    let text = await selectionFromPage(tab.id);
+    if (!text && isInjectableUrl(tab.url)) {
+      text = await clipboardFromPage(tab.id);
+    }
+
+    if (!text) {
+      await showNotification(
+        "Select Translate",
+        "没有取到选中的文字：内置 PDF 请「选中 → 右键 → 翻译」，或先复制再用快捷键。"
+      );
+      return;
+    }
+    await handleTranslate(text, tab);
+  } catch (_) {
+    // 快捷键在任何情况下都不应该抛到控制台
+  }
 });
+
+/* ---------------------------------------------------------------- 消息 */
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (!msg || !msg.type) return;
@@ -129,6 +242,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 });
+
+/* ---------------------------------------------------------------- 翻译 */
 
 async function translateWithSettings(raw) {
   const settings = await loadSettings();
@@ -169,18 +284,11 @@ async function presentResult(result, tab) {
   await openResultPanel(result);
   const title = result.ok
     ? `${result.query} → ${result.translation}`
-    : "Translation failed";
+    : "翻译失败";
   const message = result.ok
     ? `${shortLangLabel(result.sourceLang)} → ${shortLangLabel(result.targetLang)} · ${result.engine}`
-    : result.error || "Unknown error";
+    : result.error || "未知错误";
   await showNotification(title, message);
-}
-
-function isInjectableUrl(url) {
-  if (!url) return false;
-  return !/^(chrome|edge|devtools|chrome-extension|edge-extension|about|view-source|chrome-error):/i.test(
-    url
-  );
 }
 
 function showToastInPage(result) {

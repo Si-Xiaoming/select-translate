@@ -39,7 +39,8 @@
 - **PDF / IEEE 友好**：右键菜单（Chromium PDF 上最稳的免费方案）
 - **免费引擎**：Google Translate（`gtx`）+ MyMemory 回退
 - **设置同步**：`chrome.storage.sync`
-- **快捷键** `Alt+T`
+- **快捷键**：默认 `Alt+T`，弹窗内点按键框即可录制修改（不需要浏览器设置页）
+- **更新后免刷新**：扩展更新会向已打开的标签页重新注入内容脚本，不再出现 `Extension context invalidated`
 - Manifest V3，兼容 Edge 与 Chrome
 
 ---
@@ -67,7 +68,9 @@
 1. 点击工具栏图标 → 选择 **源语言** 与 **目标语言**（默认：自动检测 → 简体中文）
 2. 网页：选中单词/短句 → 查看浮层；也可在弹窗关闭「自动划词翻译」
 3. PDF / IEEE stamp：选中后右键 → **翻译「…」→ …**
-4. 按 `Alt+T` 翻译当前选区；可在浏览器扩展快捷键设置中修改
+4. 快捷键：选中文字后按 `Alt+T`（默认）。**在弹窗「快捷键」一栏点一下按键框即可录制新的组合键**，改完即时生效，不需要去浏览器设置页；内置 PDF 阅读器这类无法注入脚本的页面，仍可用 `edge://extensions/shortcuts` 或右键菜单
+
+> 扩展更新/重载后无需刷新页面：后台会自动把新的内容脚本注入已打开的标签页，避免出现 `Extension context invalidated`。若某个页面仍然提示失效，点浮层里的「刷新页面」即可。
 
 ---
 
@@ -100,11 +103,12 @@ Chromium / Edge 的 PDF 界面运行在隔离阅读器中，其他扩展**无法
 
 ```
 ├── manifest.json      # MV3 清单
-├── background.js      # 右键菜单 / 快捷键 / 翻译调度
+├── background.js      # 右键菜单 / 快捷键 / 翻译调度 / 更新后重新注入
+├── shortcut.js        # 快捷键解析与匹配（content script + popup 共用）
 ├── languages.js       # 语言列表与同步设置
 ├── translator.js      # 免费翻译后端
-├── content.js/css     # 网页划词浮层
-├── popup.*            # 语言选择与手动查词
+├── content.js/css     # 网页划词浮层、页面内快捷键
+├── popup.*            # 语言选择、快捷键录制与手动查词
 ├── result.*           # PDF 结果小窗
 └── icons/             # 图标
 ```

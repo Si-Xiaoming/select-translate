@@ -6,7 +6,9 @@
 const DEFAULT_SETTINGS = {
   sourceLang: "auto",
   targetLang: "zh-CN",
-  autoTranslate: true
+  autoTranslate: true,
+  // 页面内快捷键（content script 自行监听），可在弹窗里点击录制修改
+  shortcut: "Alt+T"
 };
 
 /** @type {{ code: string, name: string, nameZh: string }[]} */
@@ -74,7 +76,12 @@ async function loadSettings() {
   return {
     sourceLang: data.sourceLang || DEFAULT_SETTINGS.sourceLang,
     targetLang: data.targetLang || DEFAULT_SETTINGS.targetLang,
-    autoTranslate: data.autoTranslate !== false
+    autoTranslate: data.autoTranslate !== false,
+    // 显式存成空串表示"关闭快捷键"，这里不要回退成默认值
+    shortcut:
+      data.shortcut === undefined || data.shortcut === null
+        ? DEFAULT_SETTINGS.shortcut
+        : String(data.shortcut)
   };
 }
 
@@ -83,7 +90,9 @@ async function saveSettings(partial) {
   const next = {
     sourceLang: partial.sourceLang != null ? partial.sourceLang : current.sourceLang,
     targetLang: partial.targetLang != null ? partial.targetLang : current.targetLang,
-    autoTranslate: partial.autoTranslate != null ? Boolean(partial.autoTranslate) : current.autoTranslate
+    autoTranslate: partial.autoTranslate != null ? Boolean(partial.autoTranslate) : current.autoTranslate,
+    shortcut:
+      partial.shortcut != null ? String(partial.shortcut).trim() : current.shortcut
   };
   if (next.sourceLang !== "auto" && next.sourceLang === next.targetLang) {
     if (partial.sourceLang != null && partial.targetLang == null) {
@@ -97,7 +106,8 @@ async function saveSettings(partial) {
   await chrome.storage.sync.set({
     sourceLang: next.sourceLang,
     targetLang: next.targetLang,
-    autoTranslate: next.autoTranslate
+    autoTranslate: next.autoTranslate,
+    shortcut: next.shortcut
   });
   return next;
 }

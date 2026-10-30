@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Select Translate — PDF & Web",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "description": "Free select-to-translate for Edge/Chrome. Any language pair. Works on web pages, built-in PDF viewer, and IEEE Xplore stamp PDFs. No API key.",
   "permissions": [
     "storage",
@@ -40,7 +40,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": ["shortcut.js", "content.js"],
       "css": ["content.css"],
       "run_at": "document_idle",
       "all_frames": true,

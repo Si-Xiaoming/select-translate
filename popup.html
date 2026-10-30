@@ -33,9 +33,20 @@
     <ol>
       <li><strong>网页</strong>：选中文字，浮层显示译文</li>
       <li><strong>PDF / IEEE stamp</strong>：选中后右键 →「翻译」</li>
-      <li><strong>快捷键</strong>：<kbd>Alt</kbd>+<kbd>T</kbd>；可在浏览器快捷键设置中修改</li>
+      <li><strong>快捷键</strong>：选中文字后按 <kbd id="howtoShortcut">Alt+T</kbd></li>
     </ol>
-    <button id="openShortcuts" type="button" class="shortcut-link">打开快捷键设置</button>
+  </section>
+
+  <section class="shortcut-section">
+    <h2>快捷键</h2>
+    <div class="shortcut-row">
+      <button id="shortcutButton" type="button" class="shortcut-capture" title="点击后按下新的组合键">
+        <kbd id="shortcutText">Alt+T</kbd>
+      </button>
+      <button id="shortcutReset" type="button" class="ghost" title="恢复默认快捷键">恢复默认</button>
+    </div>
+    <p class="hint" id="shortcutHint">点击上方按键框后按下新的组合键（需包含 Ctrl / Alt / ⌘）。在网页中选中文字后按下即可翻译。</p>
+    <button id="openShortcuts" type="button" class="shortcut-link">打开浏览器快捷键设置（内置 PDF 阅读器等页面用得到）</button>
   </section>
 
   <section class="toggle-section">
@@ -64,6 +75,7 @@
     本地 PDF：扩展详情中开启「允许访问文件网址」。
   </footer>
   <script src="languages.js"></script>
+  <script src="shortcut.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

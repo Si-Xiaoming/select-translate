@@ -115,6 +115,75 @@ h2 {
   line-height: 1.4;
 }
 
+.hint.warn {
+  color: #9b2c2c;
+}
+
+.hint.ok {
+  color: #1f6b3a;
+}
+
+.shortcut-section {
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fffaf2;
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shortcut-capture {
+  flex: 1;
+  padding: 7px 10px;
+  background: #fff;
+  color: var(--ink);
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.shortcut-capture:hover {
+  background: #f0ebe3;
+  filter: none;
+}
+
+.shortcut-capture.unset kbd {
+  color: var(--muted);
+}
+
+.shortcut-capture.capturing {
+  border-style: solid;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(31, 58, 95, 0.12);
+}
+
+.shortcut-capture kbd {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ghost {
+  flex: none;
+  padding: 7px 10px;
+  background: #fff;
+  color: var(--accent);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.ghost:hover {
+  background: #f0ebe3;
+  filter: none;
+}
+
 .toggle-section {
   padding: 9px 10px;
   border: 1px solid var(--line);
