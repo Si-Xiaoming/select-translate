@@ -124,13 +124,25 @@
       try {
         chrome.runtime.sendMessage({ type: "TRANSLATE", text }, (res) => {
           if (chrome.runtime.lastError) {
-            resolve({ ok: false, error: chrome.runtime.lastError.message });
+            const message = chrome.runtime.lastError.message || "";
+            resolve({
+              ok: false,
+              error: /extension context invalidated/i.test(message)
+                ? "扩展刚刚更新，请刷新当前页面后再翻译。"
+                : message
+            });
             return;
           }
           resolve(res || { ok: false, error: "无响应" });
         });
       } catch (e) {
-        resolve({ ok: false, error: e.message || "扩展上下文失效" });
+        const message = e && e.message ? e.message : "";
+        resolve({
+          ok: false,
+          error: /extension context invalidated/i.test(message)
+            ? "扩展刚刚更新，请刷新当前页面后再翻译。"
+            : message || "扩展暂时无法响应，请刷新页面后重试。"
+        });
       }
     });
   }

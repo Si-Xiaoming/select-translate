@@ -52,6 +52,18 @@ h2 {
   line-height: 1.5;
 }
 
+.shortcut-link {
+  margin-top: 6px;
+  padding: 0;
+  background: transparent;
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.shortcut-link:hover {
+  filter: none;
+}
+
 .lang-row {
   display: grid;
   grid-template-columns: 1fr auto 1fr;

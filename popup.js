@@ -7,6 +7,7 @@ const targetEl = document.getElementById("targetLang");
 const swapEl = document.getElementById("swap");
 const pairSub = document.getElementById("pairSub");
 const autoTranslateEl = document.getElementById("autoTranslate");
+const openShortcutsEl = document.getElementById("openShortcuts");
 
 function fillSelect(el, includeAuto) {
   el.innerHTML = "";
@@ -116,6 +117,12 @@ swapEl.addEventListener("click", async () => {
 goEl.addEventListener("click", doTranslate);
 qEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter") doTranslate();
+});
+
+openShortcutsEl.addEventListener("click", () => {
+  const isEdge = /Edg\//.test(navigator.userAgent);
+  const url = isEdge ? "edge://extensions/shortcuts" : "chrome://extensions/shortcuts";
+  chrome.tabs.create({ url });
 });
 
 loadLangUI().then(loadLast);
