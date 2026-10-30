@@ -99,6 +99,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
   if (msg.type === "TRANSLATE") {
     (async () => {
+      if (msg.automatic) {
+        const settings = await loadSettings();
+        if (!settings.autoTranslate) {
+          sendResponse({ ok: false, skipped: true });
+          return;
+        }
+      }
       const result = await translateWithSettings(msg.text);
       await rememberResult(result);
       sendResponse(result);

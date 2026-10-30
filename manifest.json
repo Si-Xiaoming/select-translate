@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Select Translate — PDF & Web",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Free select-to-translate for Edge/Chrome. Any language pair. Works on web pages, built-in PDF viewer, and IEEE Xplore stamp PDFs. No API key.",
   "permissions": [
     "storage",

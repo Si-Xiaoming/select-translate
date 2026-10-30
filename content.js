@@ -5,7 +5,8 @@
   let lastQuery = "";
   let lastAt = 0;
   let sourceLang = "auto";
-  let autoTranslate = true;
+  let autoTranslate = false;
+  let settingsLoaded = false;
 
   function isEditableTarget(el) {
     if (!el) return false;
@@ -122,7 +123,9 @@
   async function requestTranslate(text) {
     return new Promise((resolve) => {
       try {
-        chrome.runtime.sendMessage({ type: "TRANSLATE", text }, (res) => {
+        chrome.runtime.sendMessage(
+          { type: "TRANSLATE", text, automatic: true },
+          (res) => {
           if (chrome.runtime.lastError) {
             const message = chrome.runtime.lastError.message || "";
             resolve({
@@ -133,8 +136,14 @@
             });
             return;
           }
+          if (res && res.skipped) {
+            hideBubble();
+            resolve(res);
+            return;
+          }
           resolve(res || { ok: false, error: "无响应" });
-        });
+          }
+        );
       } catch (e) {
         const message = e && e.message ? e.message : "";
         resolve({
@@ -151,7 +160,10 @@
     try {
       chrome.runtime.sendMessage({ type: "GET_SETTINGS" }, (res) => {
         if (res && res.sourceLang) sourceLang = res.sourceLang;
-        if (res && typeof res.autoTranslate === "boolean") autoTranslate = res.autoTranslate;
+        if (res && typeof res.autoTranslate === "boolean") {
+          autoTranslate = res.autoTranslate;
+          settingsLoaded = true;
+        }
       });
     } catch (_) {}
   }
@@ -161,18 +173,23 @@
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area === "sync") {
         if (changes.sourceLang) sourceLang = changes.sourceLang.newValue || "auto";
-        if (changes.autoTranslate) autoTranslate = changes.autoTranslate.newValue !== false;
+        if (changes.autoTranslate) {
+          autoTranslate = changes.autoTranslate.newValue !== false;
+          settingsLoaded = true;
+          if (!autoTranslate) hideBubble();
+        }
       }
     });
   } catch (_) {}
 
   async function onMouseUp(e) {
-    if (!autoTranslate) return;
+    if (!settingsLoaded || !autoTranslate) return;
     if (e.button !== 0) return;
     if (isEditableTarget(e.target)) return;
     if (e.target && e.target.closest && e.target.closest("#" + TOAST_ID)) return;
 
     await new Promise((r) => setTimeout(r, 10));
+    if (!settingsLoaded || !autoTranslate) return;
 
     let text = getSelectedText();
     if (!text || text.length > MAX_CHARS) {
