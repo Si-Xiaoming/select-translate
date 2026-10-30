@@ -103,6 +103,39 @@ h2 {
   line-height: 1.4;
 }
 
+.toggle-section {
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fffaf2;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.toggle-row span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.toggle-row small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.toggle-row input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
 .row {
   display: flex;
   gap: 6px;

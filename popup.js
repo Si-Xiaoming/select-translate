@@ -6,6 +6,7 @@ const sourceEl = document.getElementById("sourceLang");
 const targetEl = document.getElementById("targetLang");
 const swapEl = document.getElementById("swap");
 const pairSub = document.getElementById("pairSub");
+const autoTranslateEl = document.getElementById("autoTranslate");
 
 function fillSelect(el, includeAuto) {
   el.innerHTML = "";
@@ -30,13 +31,15 @@ async function loadLangUI() {
   const settings = await loadSettings();
   sourceEl.value = settings.sourceLang;
   targetEl.value = settings.targetLang;
+  autoTranslateEl.checked = settings.autoTranslate;
   updatePairLabel(settings);
 }
 
 async function persistFromUI() {
   const next = await saveSettings({
     sourceLang: sourceEl.value,
-    targetLang: targetEl.value
+    targetLang: targetEl.value,
+    autoTranslate: autoTranslateEl.checked
   });
   sourceEl.value = next.sourceLang;
   targetEl.value = next.targetLang;
@@ -100,6 +103,7 @@ async function doTranslate() {
 
 sourceEl.addEventListener("change", persistFromUI);
 targetEl.addEventListener("change", persistFromUI);
+autoTranslateEl.addEventListener("change", persistFromUI);
 swapEl.addEventListener("click", async () => {
   let sl = sourceEl.value;
   let tl = targetEl.value;

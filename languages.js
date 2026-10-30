@@ -5,7 +5,8 @@
 
 const DEFAULT_SETTINGS = {
   sourceLang: "auto",
-  targetLang: "zh-CN"
+  targetLang: "zh-CN",
+  autoTranslate: true
 };
 
 /** @type {{ code: string, name: string, nameZh: string }[]} */
@@ -72,7 +73,8 @@ async function loadSettings() {
   const data = await chrome.storage.sync.get(DEFAULT_SETTINGS);
   return {
     sourceLang: data.sourceLang || DEFAULT_SETTINGS.sourceLang,
-    targetLang: data.targetLang || DEFAULT_SETTINGS.targetLang
+    targetLang: data.targetLang || DEFAULT_SETTINGS.targetLang,
+    autoTranslate: data.autoTranslate !== false
   };
 }
 
@@ -80,7 +82,8 @@ async function saveSettings(partial) {
   const current = await loadSettings();
   const next = {
     sourceLang: partial.sourceLang != null ? partial.sourceLang : current.sourceLang,
-    targetLang: partial.targetLang != null ? partial.targetLang : current.targetLang
+    targetLang: partial.targetLang != null ? partial.targetLang : current.targetLang,
+    autoTranslate: partial.autoTranslate != null ? Boolean(partial.autoTranslate) : current.autoTranslate
   };
   if (next.sourceLang !== "auto" && next.sourceLang === next.targetLang) {
     if (partial.sourceLang != null && partial.targetLang == null) {
@@ -93,7 +96,8 @@ async function saveSettings(partial) {
   }
   await chrome.storage.sync.set({
     sourceLang: next.sourceLang,
-    targetLang: next.targetLang
+    targetLang: next.targetLang,
+    autoTranslate: next.autoTranslate
   });
   return next;
 }

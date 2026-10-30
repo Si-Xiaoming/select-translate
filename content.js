@@ -5,6 +5,7 @@
   let lastQuery = "";
   let lastAt = 0;
   let sourceLang = "auto";
+  let autoTranslate = true;
 
   function isEditableTarget(el) {
     if (!el) return false;
@@ -138,6 +139,7 @@
     try {
       chrome.runtime.sendMessage({ type: "GET_SETTINGS" }, (res) => {
         if (res && res.sourceLang) sourceLang = res.sourceLang;
+        if (res && typeof res.autoTranslate === "boolean") autoTranslate = res.autoTranslate;
       });
     } catch (_) {}
   }
@@ -145,13 +147,15 @@
   refreshSettings();
   try {
     chrome.storage.onChanged.addListener((changes, area) => {
-      if (area === "sync" && changes.sourceLang) {
-        sourceLang = changes.sourceLang.newValue || "auto";
+      if (area === "sync") {
+        if (changes.sourceLang) sourceLang = changes.sourceLang.newValue || "auto";
+        if (changes.autoTranslate) autoTranslate = changes.autoTranslate.newValue !== false;
       }
     });
   } catch (_) {}
 
   async function onMouseUp(e) {
+    if (!autoTranslate) return;
     if (e.button !== 0) return;
     if (isEditableTarget(e.target)) return;
     if (e.target && e.target.closest && e.target.closest("#" + TOAST_ID)) return;
