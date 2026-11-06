@@ -5,6 +5,8 @@
  */
 
 const MAX_CHARS = 80;
+/** 单个引擎的超时：请求被墙/网络抖动时不要一直挂着，否则用户只看到"没反应" */
+const FETCH_TIMEOUT_MS = 8000;
 
 function normalizeQuery(raw) {
   if (!raw) return "";
@@ -23,6 +25,31 @@ function looksTranslatable(text) {
   return /[\p{L}\p{N}]/u.test(text);
 }
 
+/** 带超时的 JSON 请求；超时会抛出可读的错误，交给下一个引擎兜底 */
+async function fetchJson(url, label) {
+  const controller = typeof AbortController === "function" ? new AbortController() : null;
+  const timer = controller
+    ? setTimeout(() => {
+        try {
+          controller.abort();
+        } catch (_) {}
+      }, FETCH_TIMEOUT_MS)
+    : null;
+  try {
+    const res = await fetch(url, controller ? { signal: controller.signal } : undefined);
+    if (!res.ok) throw new Error(label + " HTTP " + res.status);
+    return await res.json();
+  } catch (e) {
+    const message = (e && e.message) || "";
+    if ((e && e.name === "AbortError") || /abort/i.test(message)) {
+      throw new Error(label + " 请求超时（" + Math.round(FETCH_TIMEOUT_MS / 1000) + " 秒）");
+    }
+    throw e;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 async function translateGoogle(text, sourceLang, targetLang) {
   const sl = sourceLang || "auto";
   const tl = targetLang || "zh-CN";
@@ -33,9 +60,7 @@ async function translateGoogle(text, sourceLang, targetLang) {
     encodeURIComponent(tl) +
     "&dt=t&q=" +
     encodeURIComponent(text);
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Google HTTP " + res.status);
-  const data = await res.json();
+  const data = await fetchJson(url, "Google");
   const parts = (data && data[0]) || [];
   const out = parts.map((p) => p && p[0]).filter(Boolean).join("");
   if (!out) throw new Error("Google empty result");
@@ -51,9 +76,7 @@ async function translateMyMemory(text, sourceLang, targetLang) {
     encodeURIComponent(text) +
     "&langpair=" +
     encodeURIComponent(sl + "|" + tl);
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("MyMemory HTTP " + res.status);
-  const data = await res.json();
+  const data = await fetchJson(url, "MyMemory");
   const out = data && data.responseData && data.responseData.translatedText;
   if (!out) throw new Error("MyMemory empty result");
   // MyMemory sometimes echoes INVALID LANGUAGE PAIR etc.

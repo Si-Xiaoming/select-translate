@@ -110,8 +110,19 @@ Chromium / Edge 的 PDF 界面运行在隔离阅读器中，其他扩展**无法
 ├── content.js/css     # 网页划词浮层、页面内快捷键
 ├── popup.*            # 语言选择、快捷键录制与手动查词
 ├── result.*           # PDF 结果小窗
+├── tests/             # 纯 Node 打桩测试（node tests/run-all.js）
 └── icons/             # 图标
 ```
+
+---
+
+## 开发与测试
+
+```bash
+node tests/run-all.js
+```
+
+`tests/` 是纯 Node 打桩测试，不需要浏览器：把 `content.js` / `background.js` / `popup.js` 放进 vm 沙箱，用假的 DOM 与 `chrome.*` 驱动，覆盖划词浮层、页面内快捷键、快捷键去重、**右键菜单点击**、弹窗快捷键录制等入口。改完代码先跑一遍再加载扩展，能挡住"右键没反应"这类回归。
 
 ---
 

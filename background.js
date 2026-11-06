@@ -57,6 +57,16 @@ async function refreshContextMenu() {
   });
 }
 
+/* ---------------------------------------------------------------- 右键菜单 */
+
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (!info || info.menuItemId !== MENU_ID) return;
+  const text = String(info.selectionText || "").trim();
+  if (!text) return;
+  // PDF 阅读器里拿不到内容脚本，右键 + info.selectionText 是唯一可靠通道
+  await handleTranslate(text, tab);
+});
+
 /* --------------------------------------------------------- 内容脚本维护 */
 
 function isInjectableUrl(url) {
@@ -251,9 +261,25 @@ async function translateWithSettings(raw) {
 }
 
 async function handleTranslate(raw, tab) {
-  const result = await translateWithSettings(raw);
-  await rememberResult(result);
-  await presentResult(result, tab);
+  // 无论中间哪一步出错（读设置、存历史、弹浮层），都必须给出可见反馈，
+  // 否则用户看到的就是"右键点了没反应"。
+  let result;
+  try {
+    result = await translateWithSettings(raw);
+  } catch (e) {
+    result = { ok: false, error: "翻译失败：" + ((e && e.message) || "未知错误") };
+  }
+  try {
+    await rememberResult(result);
+  } catch (_) {}
+  try {
+    await presentResult(result, tab);
+  } catch (e) {
+    await showNotification(
+      "Select Translate",
+      (result && result.error) || (e && e.message) || "翻译失败"
+    );
+  }
 }
 
 async function rememberResult(result) {
@@ -281,7 +307,10 @@ async function presentResult(result, tab) {
     } catch (_) {}
   }
 
-  await openResultPanel(result);
+  // PDF 阅读器等注入不进去的页面：退回独立小窗 + 通知
+  try {
+    await openResultPanel(result);
+  } catch (_) {}
   const title = result.ok
     ? `${result.query} → ${result.translation}`
     : "翻译失败";
